@@ -2,7 +2,6 @@
 title: "p1c1"
 format: html
 editor: visual
-execute:
 ---
 
 ```{r}
@@ -17,17 +16,17 @@ plastics <- tuesdata$plastics
 
 ```
 
-##CONTEXT OF DATA
+** CONTEXT OF DATA
 The data comes from the Break Free from Plastic audit which has a collection of data on plastic waste. When plastic waste is collected, it is recorded, identifying the company which is largely responsible for the waste.  The dataset contains relevant information on where the waste was collected, the company associated with the waste, and the material type.
 
-##DATA CLEANING
+** DATA CLEANING
 Data from 2019 and 2020 were imported and then combined into a single dataset and a year variable was added to keep track of the data from each year. Then, a total count was added and 2019 had duplicate columns removed.
 
-##POSSIBLE RESEARCH QUESTIONS
+** POSSIBLE RESEARCH QUESTIONS
 1. Which parent company produced the most plastic waste overall between 2019 and 2020?
 2. What are the most common types of plastic waste across all countries?
 
-##Question 1
+** Question 1
 ```{r}
 top_company <- plastics |>
   filter(!is.na(parent_company)) |>
