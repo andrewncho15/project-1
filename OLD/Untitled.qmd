@@ -1,0 +1,55 @@
+---
+title: "project1check2"
+format: html
+editor: visual
+---
+
+# Data import
+
+```{r}
+tuesdata <- tidytuesdayR::tt_load('2021-01-26')
+tuesdata <- tidytuesdayR::tt_load(2021, week = 5)
+
+plastics <- tuesdata$plastics
+```
+
+# Plastic summary / year function
+
+```{r}
+library(dplyr)
+
+plastic_summary_by_year <- function(data, year_value) {
+  data |>
+    filter(year == year_value) |>
+    summarise(
+      pet = sum(pet, na.rm = TRUE),
+      hdpe = sum(hdpe, na.rm = TRUE),
+      ldpe = sum(ldpe, na.rm = TRUE),
+      pp = sum(pp, na.rm = TRUE),
+      ps = sum(ps, na.rm = TRUE),
+      pvc = sum(pvc, na.rm = TRUE),
+      other = sum(o, na.rm = TRUE)
+    ) |>
+    mutate(
+      total = pet + hdpe + ldpe + pp + ps + pvc + other
+    ) |>
+    mutate(
+      pet = pet / total,
+      hdpe = hdpe / total,
+      ldpe = ldpe / total,
+      pp = pp / total,
+      ps = ps / total,
+      pvc = pvc / total,
+      other = other / total,
+      year = year_value
+    )
+}
+```
+
+# Example call
+
+```{r}
+plastic_summary_by_year(plastics, 2019) |>
+  bind_rows(plastic_summary_by_year(plastics, 2020)) |>
+  select(year, pet, hdpe, ldpe, pp, ps, pvc, other)
+```

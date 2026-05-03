@@ -1,0 +1,96 @@
+---
+title: "p1c3"
+format: html
+editor: visual
+---
+
+## 1
+
+```{r}
+library(httr)
+library(tidyjson)
+library(jsonlite)
+library(tidyverse)
+library(glue)
+
+tuesdata <- tidytuesdayR::tt_load('2021-01-26')
+tuesdata <- tidytuesdayR::tt_load(2021, week = 5)
+plastic_data <- tuesdata$plastics
+```
+
+```{r}
+get_region <- function(region) {
+  url <- glue("https://restcountries.com/v3.1/region/{region}?fields=name,population,region")
+
+  res <- GET(url)
+  stop_for_status(res)
+
+  txt <- content(res, as = "text", encoding = "UTF-8")
+  df <- fromJSON(txt, flatten = TRUE)
+
+  as_tibble(df) %>%
+    transmute(
+      country_api = coalesce(name.common, name.official),
+      region = region,
+      population = population
+    )
+}
+
+region_list <- c("africa", "americas", "asia", "europe", "oceania")
+
+country_region_lookup <- map_dfr(region_list, get_region) %>%
+  distinct() %>%
+  filter(!is.na(country_api))
+
+country_region_lookup
+```
+
+```{r}
+plastic_data_clean <- plastic_data %>%
+  mutate(
+    country_clean = str_squish(country),
+    country_clean = recode(
+      country_clean,
+      "USA" = "United States",
+      "US" = "United States",
+      "UK" = "United Kingdom",
+      "Czech Republic" = "Czechia",
+      "Republic of the Congo" = "Congo",
+      "Democratic Republic of the Congo" = "DR Congo",
+      .default = country_clean
+    )
+  )
+
+lookup_clean <- country_region_lookup %>%
+  mutate(
+    country_clean = str_squish(country_api)
+  )
+
+plastic_with_region <- plastic_data_clean %>%
+  left_join(
+    lookup_clean %>% select(country_clean, region, population),
+    by = "country_clean"
+  )
+
+unmatched_countries <- plastic_with_region %>%
+  filter(is.na(region)) %>%
+  distinct(country, country_clean)
+
+unmatched_countries
+```
+
+```{r}
+plastic_by_region <- plastic_with_region %>%
+  filter(!is.na(region)) %>%
+  group_by(region) %>%
+  summarise(
+    total_plastic = sum(grand_total, na.rm = TRUE),
+    countries_included = n_distinct(country),
+    total_population = sum(population, na.rm = TRUE),
+    plastic_per_capita = total_plastic / total_population,
+    .groups = "drop"
+  ) %>%
+  arrange(desc(total_plastic))
+
+plastic_by_region
+```
